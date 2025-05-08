@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>
+   Documentation of example.ps1
+  </title>
+  <link href="master.css" rel="stylesheet"/>
+  <link href="prism/prism.css" rel="stylesheet"/>
+  <script src="prism/prism.js">
+  </script>
+ </head>
+ <body>
+  <header>
+   Documentation of example.ps1
+  </header>
+  <main>
+   <section class="toc" id="table-of-content">
+    <header>
+     Table of contents
+    </header>
+    <section class="toc-links">
+     <a href="#definition-test">
+      test
+     </a>
+     <br/>
+    </section>
+   </section>
+   <section class="definitions">
+    <section class="function-section" id="definition-test">
+     <header class="function-title">
+      test
+     </header>
+     <div class="function-content">
+      <div class="description">
+       <section class="description">
+        <p>
+         <br/>
+         This a test function used as an example of the output
+         <br/>
+         for psDoc.py
+         <br/>
+        </p>
+       </section>
+       <section class="links">
+        <header>
+         Related links
+        </header>
+        <p>
+         <a href="https://github.com/alexis-opolka/psDoc.py">
+          The GitHub Homepage
+         </a>
+         <br/>
+        </p>
+       </section>
+      </div>
+      <section class="code">
+       <details>
+        <summary>
+         See code for test
+        </summary>
+        <div class="code">
+         <pre><code class="language-powershell">function test {
+    param (
+        [parameter(Mandatory)]
+        [string] $StringToEcho
+    )
+
+    Write-Output "$StringToEcho"
+}
+</code></pre>
+        </div>
+       </details>
+      </section>
+     </div>
+    </section>
+   </section>
+   <hr/>
+   <section class="script">
+    <header>
+     Below is the entire file parsed by this script
+    </header>
+    <pre><code class="language-powershell">
+&lt;#
+    .DESCRIPTION
+    This a test function used as an example of the output
+    for psDoc.py
+
+    .LINK
+    The GitHub Homepage: https://github.com/alexis-opolka/psDoc.py
+
+#&gt;
+function test {
+    param (
+        [parameter(Mandatory)]
+        [string] $StringToEcho
+    )
+
+    Write-Output "$StringToEcho"
+}
+
+### We're calling the test function
+test 'Hello World'
+</code></pre>
+   </section>
+  </main>
+  <footer>
+   <hr/>
+   <section>
+    Made by
+    <a href="https://github.com/alexis-opolka/psDoc.py">
+     psDoc.py
+    </a>
+    v0.9.
+   </section>
+  </footer>
+ </body>
+</html>
