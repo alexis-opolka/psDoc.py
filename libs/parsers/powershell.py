@@ -3,6 +3,12 @@ from libs.parsers.baseParser import BaseParser
 
 class PowerShellParser(BaseParser):
 
+  def retrieve_function_name(self, line: str) -> str:
+    syntax = line.strip().split(" ")
+    function_name = syntax[1].replace("{", "")
+
+    return function_name
+
   def parse(self):
     consumes_comment = False
     consumes_function = False
@@ -13,23 +19,38 @@ class PowerShellParser(BaseParser):
     with open(self.file, "+rt", encoding="utf-8") as fin:
       lines = fin.readlines()
 
-      for line in lines:
-        if line.startswith("<#"):
+      for i in range(0, len(lines)):
+        line = lines[i]
+
+        if line.startswith("<#") & (not line.startswith("<# @global")):
           consumes_comment = True
 
         if line.startswith("#>"):
           consumes_comment = False
 
+          if lines[i+1].startswith("function"):
+
+            ### We verify if we can get the name of the function we're commenting
+            curr_function_name = self.retrieve_function_name(lines[i+1])
+
           curr_comment.append(line)
-          self.comments.append(curr_comment)
+          self.comments.update({
+            curr_function_name: curr_comment
+          })
+
           curr_comment = []
 
         if line.startswith("function"):
-          syntax = line.strip().split(" ")
-          function_name = syntax[1].replace("{", "")
-          curr_function_name = function_name
+          if curr_function_name == "":
+            curr_function_name = self.retrieve_function_name(line)
 
-          self.function_names.append(function_name)
+          self.function_names.append(curr_function_name)
+
+          if curr_function_name not in self.comments.keys():
+            self.comments.update({
+              curr_function_name: ""
+            })
+
           consumes_function = True
 
         if line.startswith("}") and consumes_function:
@@ -39,6 +60,8 @@ class PowerShellParser(BaseParser):
 
           self.functions_dict[curr_function_name] = curr_function
           curr_function = []
+
+          curr_function_name = ""
 
         if consumes_comment:
           curr_comment.append(line)
@@ -68,7 +91,7 @@ class PowerShellParser(BaseParser):
 
     for i in range(0, len(self.function_names)):
       function = self.function_names[i]
-      comment = self.comments[i]
+      comment = self.comments[function]
       code = self.functions_dict[function]
 
       ### We're constructing the header

@@ -4,7 +4,7 @@ class BaseParser:
     self.file = filename
 
     ### This holds the comments documenting the functions
-    self.comments = []
+    self.comments = {}
     ### This holds the names of all the functions
     self.function_names = []
     ### This holds the entirety of the script

@@ -7,7 +7,7 @@ from libs.parsers.baseParser import BaseParser
 from libs.parsers.powershell import PowerShellParser
 
 ### This is the version of this script
-version = "0.9"
+version = "0.10"
 
 
 def check_args_size(args: list[str]):
