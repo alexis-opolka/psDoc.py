@@ -10,6 +10,7 @@ class PowerShellParser(BaseParser):
     return function_name
 
   def parse(self):
+    global_comment = False
     consumes_comment = False
     consumes_function = False
     curr_comment = []
@@ -22,21 +23,31 @@ class PowerShellParser(BaseParser):
       for i in range(0, len(lines)):
         line = lines[i]
 
-        if line.startswith("<#") & (not line.startswith("<# @global")):
+        if line.startswith("<#"):
+          if line.startswith("<# @global"):
+            global_comment = True
+
           consumes_comment = True
 
         if line.startswith("#>"):
           consumes_comment = False
 
-          if lines[i+1].startswith("function"):
+          if global_comment == True:
+            self.comments.update({
+              "script": curr_comment
+            })
 
-            ### We verify if we can get the name of the function we're commenting
-            curr_function_name = self.retrieve_function_name(lines[i+1])
+            global_comment = False
+          else:
+            if lines[i+1].startswith("function"):
 
-          curr_comment.append(line)
-          self.comments.update({
-            curr_function_name: curr_comment
-          })
+              ### We verify if we can get the name of the function we're commenting
+              curr_function_name = self.retrieve_function_name(lines[i+1])
+
+            curr_comment.append(line)
+            self.comments.update({
+              curr_function_name: curr_comment
+            })
 
           curr_comment = []
 
@@ -151,8 +162,16 @@ class PowerShellParser(BaseParser):
             {toc}
           </section>
         </section>
+
+        <section id="script-description" class="global-description">
+          <header class="h2">Script Description</header>
+          <section>
+            {parse_comments(self.comments["script"])}
+          </section>
+        </section>
   
         <section class="definitions">
+          <header class="h2">Functions Definitions</header>
           {body_code}
         </section>
   

@@ -1,4 +1,4 @@
-body > header {
+body>header {
   font-size: 25px;
   font-weight: bolder;
   padding: 10px;
@@ -17,7 +17,7 @@ pre[class*="language-"] {
   overflow: auto;
 }
 
-main > section header {
+main>section header {
   font-size: large;
 }
 
@@ -25,7 +25,7 @@ main {
   width: 100%;
 }
 
-main > hr {
+main>hr {
   color: grey;
   width: 80%;
 }
@@ -37,18 +37,18 @@ section[class="script"] {
   margin-left: 5%;
 }
 
-section[class*="script"] > pre {
+section[class="script"]>pre {
   height: 600px;
 }
 
-section[class*="script"] > header {
+section[class="script"]>header {
   font-size: 20px;
   font-weight: bolder;
   text-align: center;
   padding: 20px;
 }
 
-section[class*="description"] {
+section[class="description"] {
   padding: 2px;
   color: grey;
   border-radius: 5px;
@@ -58,15 +58,16 @@ section[class*="description"] {
   -o-border-radius: 5px;
 }
 
-section[class*="components"] > header, section[class*="links"] > header {
+section[class="components"]>header,
+section[class="links"]>header {
   font-weight: bolder;
 }
 
-section[class*="code"] > details > summary {
+section[class="code"]>details>summary {
   cursor: pointer;
 }
 
-section[class*="function-section"] {
+section[class="function-section"] {
   padding: 15px;
   width: 100%;
   margin-left: 10px;
@@ -74,11 +75,11 @@ section[class*="function-section"] {
   margin-bottom: 15px;
 }
 
-section[class*="function-section"] > div[class*="function-content"] {
+section[class="function-section"]>div[class*="function-content"] {
   margin-left: 25px;
 }
 
-section[class*="function-section"] > header {
+section[class="function-section"]>header {
   font-weight: bolder;
   padding: 15px;
   background-color: rgba(197, 197, 197, 0.8);
@@ -91,7 +92,7 @@ section[class*="function-section"] > header {
 }
 
 
-body > main {
+body>main {
   display: flex;
   flex-direction: column;
   justify-content: left;
@@ -102,7 +103,8 @@ body > main {
   min-height: 100%;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
 
@@ -121,7 +123,7 @@ footer {
   text-align: center;
 }
 
-footer > hr {
+footer>hr {
   width: 80%;
 }
 
@@ -133,12 +135,37 @@ footer > hr {
   text-align: left;
 }
 
-.toc > header {
+.toc>header {
   font-weight: bolder;
   padding: 5px;
   font-size: 20px;
 }
 
-.toc > section[class*="toc-links"] {
+.toc>section[class="toc-links"] {
+  margin-left: 25px;
+}
+
+.global-description {
+  text-align: left;
+  width: inherit;
+}
+
+.h2 {
+  text-align: left;
+  font-weight: bolder;
+  font-size: 25px;
+}
+
+.global-description section[class="description"] {
+  padding: 2px;
+  color: inherit;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -ms-border-radius: 5px;
+  -o-border-radius: 5px;
+}
+
+.global-description>section {
   margin-left: 25px;
 }
