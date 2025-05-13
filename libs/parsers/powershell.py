@@ -137,6 +137,8 @@ class PowerShellParser(BaseParser):
             {self.parsed_comment}
           </div>
   
+          <hr style="width: 85%; margin: 25px" />
+
           <section class="code">
             <details>
               <summary> See code for {function} </summary>
