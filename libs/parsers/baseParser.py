@@ -1,12 +1,14 @@
 
 class BaseParser:
-  def __init__(self, filename, version):
+  def __init__(self, filename: str, version: str):
     self.file = filename
+
+    ### This holds the names of all the functions
+    self.function_names = []
 
     ### This holds the comments documenting the functions
     self.comments = {}
-    ### This holds the names of all the functions
-    self.function_names = []
+
     ### This holds the entirety of the script
     self.other = []
 

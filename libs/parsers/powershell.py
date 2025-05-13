@@ -3,6 +3,20 @@ from libs.parsers.baseParser import BaseParser
 
 class PowerShellParser(BaseParser):
 
+  def __init__(self, filename: str, version: str):
+    super().__init__(filename, version)
+
+    self.parsed_comment = ""
+
+    self.is_description = False
+    self.is_links = False
+    self.is_components = False
+    self.is_notes = False
+    self.is_example = False
+
+    self.curr_element = ""
+    self.curr_text = ""
+
   def retrieve_function_name(self, line: str) -> str:
     syntax = line.strip().split(" ")
     function_name = syntax[1].replace("{", "")
@@ -45,7 +59,6 @@ class PowerShellParser(BaseParser):
               ### We verify if we can get the name of the function we're commenting
               curr_function_name = self.retrieve_function_name(lines[i+1])
 
-            curr_comment.append(line)
             self.comments.update({
               curr_function_name: curr_comment
             })
@@ -103,13 +116,12 @@ class PowerShellParser(BaseParser):
 
     for i in range(0, len(self.function_names)):
       function = self.function_names[i]
-      comment = self.comments[function]
       code = self.functions_dict[function]
 
       ### We're constructing the header
       toc += f"<a href='#definition-{function}'>{function}</a><br />"
 
-      parsed_comment = parse_comments(comment)
+      self.__parse_comments(function)
       parsed_code = ""
 
       for code_line in code:
@@ -122,7 +134,7 @@ class PowerShellParser(BaseParser):
   
         <div class="function-content">
           <div class="description">
-            {parsed_comment}
+            {self.parsed_comment}
           </div>
   
           <section class="code">
@@ -167,7 +179,7 @@ class PowerShellParser(BaseParser):
         <section id="script-description" class="global-description">
           <header class="h2">Script Description</header>
           <section>
-            {parse_comments(self.comments["script"])}
+            {self.__parse_comments("script", True)}
           </section>
         </section>
   
@@ -197,88 +209,150 @@ class PowerShellParser(BaseParser):
 
     return html_code
 
+  def clean_curr_element(self, end_element: str) -> None:
 
-def parse_comments(comment_list):
+    if "```" in self.curr_text:
+      is_code = False
+      language = ""
+      parsed_block = ""
 
-  parsed_comment = ""
+      for line in self.curr_text.split("\n"):
+        if line.strip().startswith("```"):
+          if not is_code:
+            is_code = True
+            line = line.strip().replace("```", "").replace("\t<br />", "")
 
-  is_description = False
-  is_links = False
-  is_components = False
+            if line == "":
+              language = "powershell"
+            else:
+              language = line.strip()
 
-  curr_element = ""
-  curr_text = ""
+            parsed_block += f"<pre><code class='language-{language}'>"
+          else:
+            parsed_block += f"</pre></code>"
+        else:
+            if is_code:
+              line = line.strip().replace("<br />", "\n")
 
-  for comment_line in comment_list:
-    if "<#" in comment_line:
-      comment_line = comment_line.replace("<#", "")
+            parsed_block += line
 
-    if ".DESCRIPTION" in comment_line:
-      comment_line = comment_line.replace(".DESCRIPTION", "")
-      is_description = True
+      self.curr_text = parsed_block
 
-      curr_element = "<section class='description'><p>"
+    self.curr_element = self.curr_element + self.curr_text + end_element
+    self.parsed_comment += self.curr_element
 
-    if ".COMPONENT" in comment_line:
-      comment_line = comment_line.replace(".COMPONENT", "")
-      is_components = True
+    self.curr_element = ""
+    self.curr_text = ""
 
-      curr_element = "<section class='components'><header>Related components</header><ul>"
+  def __handle_endof_section(self):
+    if self.is_description:
+      self.is_description = False
 
-    if ".LINK" in comment_line:
-      comment_line = comment_line.replace(".LINK", "")
-      is_links = True
+      self.clean_curr_element("</p></section>")
 
-      curr_element = "<section class='links'><header>Related links</header><p>"
-    if comment_line == "\n" or "#>" in comment_line:
-      if is_description:
-        is_description = False
+    if self.is_components:
+      self.is_components = False
 
-        curr_element = curr_element + curr_text + "</p></section>"
-        parsed_comment += curr_element
+      self.clean_curr_element("</ul></section>")
 
-        curr_element = ""
-        curr_text = ""
+    if self.is_links:
+      self.is_links = False
 
-      if is_components:
-        is_components = False
+      self.clean_curr_element("</p></section>")
 
-        curr_element = curr_element + curr_text + "</ul></section>"
-        parsed_comment += curr_element
+    if self.is_notes:
+      self.is_notes = False
 
-        curr_element = ""
-        curr_text = ""
+      print("Ending a note", self.curr_text)
 
-      if is_links:
-        is_links = False
+      self.clean_curr_element("</p></section>")
 
-        curr_element = curr_element + curr_text + "</p></section>"
-        parsed_comment += curr_element
+    if self.is_example:
+      self.is_example = False
 
-        curr_element = ""
-        curr_text = ""
+      self.clean_curr_element("</div></section>")
 
-    if is_description:
-      curr_text += comment_line + "<br />"
+  def __handle_next_section(self, line: str) -> str:
 
-    if is_components:
-      if comment_line.strip() != "":
+    self.__handle_endof_section()
 
-        curr_text += f"<li> {comment_line} </li>"
+    if ".DESCRIPTION" in line:
+      line = line.replace(".DESCRIPTION", "")
+      self.is_description = True
 
-    if is_links:
-      if comment_line.strip() == "":
-        continue
+      self.curr_element = "<section class='description'><p>"
 
-      line = comment_line.strip().split(": ")
+    if ".COMPONENT" in line:
+      line = line.replace(".COMPONENT", "")
+      self.is_components = True
 
-      if len(line) > 1:
-        label = line[0]
-        href = line[1]
-      else:
-        label = comment_line
-        href = comment_line
+      self.curr_element = "<section class='components'><header>Related components</header><ul>"
 
-      curr_text += f"<a href='{href}'> {label} </a><br />"
+    if ".LINK" in line:
+      line = line.replace(".LINK", "")
+      self.is_links = True
 
-  return parsed_comment
+      self.curr_element = "<section class='links'><header>Related links</header><p>"
+
+    if ".NOTES" in line:
+      line = line.replace(".NOTES", "")
+      self.is_notes = True
+
+      self.curr_element = "<section class='notes'><header>Notes</header><p>"
+
+      print("Handling a note", self.curr_element)
+
+    if ".EXAMPLE" in line:
+      line = line.replace(".EXAMPLE", "")
+      self.is_example = True
+
+      self.curr_element = "<section class='examples'><header>Examples</header><div>"
+
+    return line
+
+  def __parse_comments(self, key: str, debug: bool = False) -> str:
+
+    ### We're cleaning possible old comments
+    self.parsed_comment = ""
+
+    for comment_line in self.comments[key]:
+      if debug:
+        print("LINE:", comment_line)
+
+      if "<#" in comment_line:
+        comment_line = comment_line.replace("<#", "")
+
+      if comment_line.strip().startswith(".") or comment_line.startswith("#>"):
+        comment_line = self.__handle_next_section(comment_line)
+
+      if self.is_description:
+        self.curr_text += comment_line.replace("\n", "\t<br />\n")
+
+      if self.is_components:
+        if comment_line.strip() != "":
+
+          self.curr_text += f"<li> {comment_line} </li>"
+
+      if self.is_links:
+        if comment_line.strip() == "":
+          continue
+
+        line = comment_line.strip().split(": ")
+
+        if len(line) > 1:
+          label = line[0]
+          href = line[1]
+        else:
+          label = comment_line
+          href = comment_line
+
+        self.curr_text += f"<a href='{href}'> {label} </a><br />"
+
+      if self.is_notes:
+        self.curr_text += comment_line + "<br />"
+
+      if self.is_example:
+        self.curr_text += comment_line
+
+
+    return self.parsed_comment
