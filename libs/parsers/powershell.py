@@ -31,8 +31,9 @@ class PowerShellParser(BaseParser):
 
         if line.startswith("#>"):
           consumes_comment = False
+          curr_comment.append(line)
 
-          if global_comment == True:
+          if global_comment:
             self.comments.update({
               "script": curr_comment
             })
