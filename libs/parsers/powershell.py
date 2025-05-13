@@ -181,7 +181,7 @@ class PowerShellParser(BaseParser):
         <section id="script-description" class="global-description">
           <header class="h2">Script Description</header>
           <section>
-            {self.__parse_comments("script", True)}
+            {self.__parse_comments("script")}
           </section>
         </section>
   
@@ -220,6 +220,7 @@ class PowerShellParser(BaseParser):
 
       for line in self.curr_text.split("\n"):
         if line.strip().startswith("```"):
+
           if not is_code:
             is_code = True
             line = line.strip().replace("```", "").replace("\t<br />", "")
@@ -231,10 +232,16 @@ class PowerShellParser(BaseParser):
 
             parsed_block += f"<pre><code class='language-{language}'>"
           else:
+            is_code = False
+
             parsed_block += f"</pre></code>"
+
         else:
             if is_code:
               line = line.strip().replace("<br />", "\n")
+
+            if not line.endswith("\n"):
+              line += "\n"
 
             parsed_block += line
 
@@ -265,7 +272,6 @@ class PowerShellParser(BaseParser):
     if self.is_notes:
       self.is_notes = False
 
-      print("Ending a note", self.curr_text)
 
       self.clean_curr_element("</p></section>")
 
@@ -301,8 +307,6 @@ class PowerShellParser(BaseParser):
       self.is_notes = True
 
       self.curr_element = "<section class='notes'><header>Notes</header><p>"
-
-      print("Handling a note", self.curr_element)
 
     if ".EXAMPLE" in line:
       line = line.replace(".EXAMPLE", "")
