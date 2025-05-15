@@ -17,6 +17,8 @@ class PowerShellParser(BaseParser):
     self.curr_element = ""
     self.curr_text = ""
 
+    self.functions_args = {}
+
   def retrieve_function_name(self, line: str) -> str:
     syntax = line.strip().split(" ")
     function_name = syntax[1].replace("{", "")
@@ -83,8 +85,11 @@ class PowerShellParser(BaseParser):
 
           curr_function.append(line)
 
-          self.functions_dict[curr_function_name] = curr_function
+
+          ### We're parsing the function before putting it inside the dictionary
+          self.parse_functions(curr_function_name, curr_function)
           curr_function = []
+
 
           curr_function_name = ""
 
@@ -362,3 +367,24 @@ class PowerShellParser(BaseParser):
 
 
     return self.parsed_comment
+
+  def parse_functions(self, key: str, function_body: list[str], debug: bool = False) -> str:
+    is_params = False
+    function_args = {}
+
+    for line in function_body:
+      if line.strip().startswith("param("):
+        is_params = True
+
+      if is_params & line.strip().endswith(")"):
+        is_params = False
+        self.functions_args[key] = function_args
+
+      if is_params:
+        ### Example of a Powershell parameter string
+        ### param(
+        ###   [Parameter(Mandatory=$true)]
+        ###   $config
+        ### )
+
+        ...
