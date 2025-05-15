@@ -371,6 +371,7 @@ class PowerShellParser(BaseParser):
   def parse_functions(self, key: str, function_body: list[str], debug: bool = False) -> str:
     is_params = False
     function_args = {}
+    types = ""
 
     for line in function_body:
       if line.strip().startswith("param("):
@@ -387,4 +388,10 @@ class PowerShellParser(BaseParser):
         ###   $config
         ### )
 
-        ...
+        if line.strip().startswith("[Parameter"):
+          types = line.strip()
+
+        if line.strip().startswith("["):
+          start_block = line.index("[")
+          end_block = line.index("]")
+          arg_type = line[start_block:end_block]
