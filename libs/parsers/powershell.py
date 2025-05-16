@@ -224,6 +224,7 @@ class PowerShellParser(BaseParser):
     ### Currently does nothing
     is_child = False
     is_list = False
+    indentation_count = 0
 
     if "```" in self.curr_text:
       is_code = False
@@ -240,13 +241,14 @@ class PowerShellParser(BaseParser):
           ### We're taking into account the possibility of a child element
           if stripped_line.startswith(4*" "):
             is_child = True
+            stripped_line = stripped_line.strip()
 
         if stripped_line.startswith("-"):
+          is_list = True
+          indentation_count = self.__get_indentation(line)
+
           if is_list:
             parsed_block += "</ul>"
-
-          is_list = True
-          print("Cleaning", stripped_line)
 
           parsed_block += f"<ul><li>{stripped_line.replace('-', '').strip()}</li>"
           continue
@@ -267,16 +269,23 @@ class PowerShellParser(BaseParser):
           else:
             is_code = False
 
-            parsed_block += f"</pre></code>"
+            parsed_block += "</pre></code>"
 
         else:
-            if is_code:
-              line = stripped_line.replace("<br />", "\n")
+          ### If the line is not empty, we check to see if the line is still indented or not
+          if len(line) > 0:
+            if is_list and self.__get_indentation(line) <= indentation_count:
+              is_list = False
 
-            if not line.endswith("\n"):
-              line += "\n"
+              parsed_block += "</ul>"
 
-            parsed_block += line
+          if is_code:
+            line = stripped_line.replace("<br />", "\n")
+
+          if not line.endswith("\n"):
+            line += "\n"
+
+          parsed_block += line
 
       self.curr_text = parsed_block
 
@@ -503,3 +512,18 @@ class PowerShellParser(BaseParser):
 
 
     return html
+
+
+  def __get_indentation(self, line: str):
+    indentation_count = 0
+
+    ### We're taking the indentation count as a basis to differentiate
+    ### between an indented block and one outside.
+    for char in line:
+      if char == " ":
+        indentation_count += 1
+      else:
+        ### At the first non-empty char encountered, we break
+        break
+
+    return indentation_count
