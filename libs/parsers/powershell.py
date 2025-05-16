@@ -226,6 +226,31 @@ class PowerShellParser(BaseParser):
     is_list = False
     indentation_count = 0
 
+    ### If an inline code element is present inside the current block
+    if "`" in self.curr_text and not "```" in self.curr_text:
+      is_code_elem = False
+
+      parsed_block = ""
+
+      for char in self.curr_text:
+        if char == "`":
+          if not is_code_elem:
+            is_code_elem = True
+
+            new_char = "<code class='language-powershell'>"
+          else:
+            is_code_elem = False
+
+            new_char = "</code>"
+        else:
+          new_char = char
+
+        parsed_block += new_char
+
+      self.curr_text = parsed_block.strip()
+
+
+    ### If a code block is present inside the current block
     if "```" in self.curr_text:
       is_code = False
       language = ""
@@ -234,6 +259,7 @@ class PowerShellParser(BaseParser):
 
       for line in self.curr_text.split("\n"):
         stripped_line = line.strip()
+
 
         if stripped_line.startswith("<br />"):
           stripped_line = stripped_line.replace("<br />", "")
