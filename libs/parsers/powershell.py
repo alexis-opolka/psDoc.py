@@ -84,7 +84,7 @@ class PowerShellParser(BaseParser):
         if stripped_line.startswith("}") and consumes_function:
           consumes_function = False
 
-          curr_function.append(line)
+          curr_function.append(stripped_line)
 
 
           ### We're parsing the function before putting it inside the dictionary
@@ -220,23 +220,48 @@ class PowerShellParser(BaseParser):
     return html_code
 
   def clean_curr_element(self, end_element: str) -> None:
+    ### Variable to know when we are inside a child element
+    ### Currently does nothing
+    is_child = False
+    is_list = False
 
     if "```" in self.curr_text:
       is_code = False
       language = ""
       parsed_block = ""
 
+
       for line in self.curr_text.split("\n"):
-        if line.strip().startswith("```"):
+        stripped_line = line.strip()
+
+        if stripped_line.startswith("<br />"):
+          stripped_line = stripped_line.replace("<br />", "")
+
+          ### We're taking into account the possibility of a child element
+          if stripped_line.startswith(4*" "):
+            is_child = True
+
+        if stripped_line.startswith("-"):
+          if is_list:
+            parsed_block += "</ul>"
+
+          is_list = True
+          print("Cleaning", stripped_line)
+
+          parsed_block += f"<ul><li>{stripped_line.replace('-', '').strip()}</li>"
+          continue
+
+
+        if stripped_line.startswith("```"):
 
           if not is_code:
             is_code = True
-            line = line.strip().replace("```", "").replace("\t<br />", "")
+            line = stripped_line.replace("```", "").replace("\t<br />", "")
 
             if line == "":
               language = "powershell"
             else:
-              language = line.strip()
+              language = stripped_line
 
             parsed_block += f"<pre><code class='language-{language}'>"
           else:
@@ -246,7 +271,7 @@ class PowerShellParser(BaseParser):
 
         else:
             if is_code:
-              line = line.strip().replace("<br />", "\n")
+              line = stripped_line.replace("<br />", "\n")
 
             if not line.endswith("\n"):
               line += "\n"
@@ -279,7 +304,6 @@ class PowerShellParser(BaseParser):
 
     if self.is_notes:
       self.is_notes = False
-
 
       self.clean_curr_element("</p></section>")
 
@@ -374,12 +398,37 @@ class PowerShellParser(BaseParser):
   def parse_functions(self, key: str, function_body: list[str], debug: bool = False) -> str:
     is_params = False
     function_args = {}
+    arg_opts = ""
+
+    def parse_parameter(arg_name: str, arg_type: str | None, arg_opts: str):
+      is_optional = False
+
+      if "=" in arg_name:
+        is_optional = True
+
+      if arg_type is None:
+        _arg_type = arg_type
+      else:
+        _arg_type = arg_type.strip().lower()
+
+      arg_name = arg_name.replace("$", "").strip()
+
+      function_args[arg_name] = {
+        "type": _arg_type,
+        "is_optional": is_optional,
+        "options": arg_opts
+      }
+
+      ### We're cleaning the arg_opts
+      arg_opts = ""
 
     for line in function_body:
-      if line.strip().startswith("param("):
+      line_stripped = line.strip()
+
+      if line_stripped.startswith("param("):
         is_params = True
 
-      if is_params & line.strip().endswith(")"):
+      if is_params & line_stripped.endswith(")"):
         is_params = False
         self.functions_args[key] = function_args
 
@@ -391,47 +440,40 @@ class PowerShellParser(BaseParser):
         ### )
 
         ### If we fall on a Parameter instruction
-        if line.strip().startswith("[Parameter"):
-          start_block = line.index("[")
-          end_block = line.index("]")
-          arg_opts = line[start_block+1:end_block]
+        if line_stripped.startswith("[Parameter"):
+          start_block = line_stripped.index("[")
+          end_block = line_stripped.index("]")
+          arg_opts = line_stripped[start_block+1:end_block]
 
-          ### For now, we recognize that there are options, but we don't render them
-          ### maybe later we will do it.
-          print("arg_opts:", arg_opts)
           continue
 
         ### If the parameter has typing
-        if line.strip().startswith("["):
-          start_block = line.index("[")
-          end_block = line.index("]")
-          arg_block = line.index("$")
+        if line_stripped.startswith("["):
+          start_block = line_stripped.index("[")
+          end_block = line_stripped.index("]")
+          arg_block = line_stripped.index("$")
 
-          arg_type = line[start_block+1:end_block]
-          arg_name = line[arg_block::].replace(",", "")
+          arg_type = line_stripped[start_block+1:end_block]
+          arg_name = line_stripped[arg_block::].replace(",", "")
 
           ### We handle possible comment in the end line
           if "#" in arg_name:
-            comment_block = line.index("#")
-            arg_name = line[arg_block:comment_block]
+            comment_block = line_stripped.index("#")
+            arg_name = line_stripped[arg_block:comment_block]
 
-          arg_name = arg_name.replace("$", "").strip()
-
-          function_args[arg_name] = {
-            "type": arg_type.strip()
-          }
+          parse_parameter(arg_name, arg_type, arg_opts)
 
         ### If the parameter doesn't have typing
-        if line.strip().startswith("$"):
-          arg_block = line.index("$")
-          arg_name = line[arg_block::].replace(",", "").strip()
+        if line_stripped.startswith("$"):
+          arg_block = line_stripped.index("$")
+          arg_name = line_stripped[arg_block::].replace(",", "").replace("$", "").strip()
 
           ### We handle possible comment in the end line
           if "#" in arg_name:
-            comment_block = line.index("#")
-            arg_name = line[arg_block:comment_block]
+            comment_block = line_stripped.index("#")
+            arg_name = line_stripped[arg_block:comment_block]
 
-          print("arg_type:", arg_name)
+          parse_parameter(arg_name, None, arg_opts)
 
     ### At the end, we add the body to the dictionary
     self.functions_dict[key] = function_body
@@ -444,9 +486,20 @@ class PowerShellParser(BaseParser):
       return html
 
     for arg_key, arg_dict in self.functions_args[key].items():
-      html += f"<span class='parameter-type type-{arg_dict['type'].strip()}'>{arg_dict['type'].strip()}</span><span class='parameter-name'>{arg_key.strip()},&nbsp;</span>"
+      arg_type: str | None = arg_dict['type']
+      is_optional = arg_dict["is_optional"]
 
-    if html.endswith(",&nbsp;</span>"):
-      html = html[:-14] + "</span>"
+      html += f"<span class='parameter {'parameter-optional' if is_optional else ''}'>"
+
+      if arg_type is not None:
+        html += f"<span class='parameter-type type-{arg_type}'>{arg_type}</span><span class='parameter-name'>{arg_key.strip()}</span>"
+      else:
+        html += f"<span class='parameter-name'>{arg_key.strip()}</span>"
+
+      html += "</span>"
+
+    if html.endswith(",&nbsp;</span></span>"):
+      html = html[:-21] + "</span></span>"
+
 
     return html
