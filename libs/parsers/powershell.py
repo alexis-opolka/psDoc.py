@@ -38,14 +38,15 @@ class PowerShellParser(BaseParser):
 
       for i in range(0, len(lines)):
         line = lines[i]
+        stripped_line = line.strip()
 
-        if line.startswith("<#"):
+        if stripped_line.startswith("<#"):
           if line.startswith("<# @global"):
             global_comment = True
 
           consumes_comment = True
 
-        if line.startswith("#>"):
+        if stripped_line.startswith("#>"):
           consumes_comment = False
           curr_comment.append(line)
 
@@ -67,7 +68,7 @@ class PowerShellParser(BaseParser):
 
           curr_comment = []
 
-        if line.startswith("function"):
+        if stripped_line.startswith("function"):
           if curr_function_name == "":
             curr_function_name = self.retrieve_function_name(line)
 
@@ -80,7 +81,7 @@ class PowerShellParser(BaseParser):
 
           consumes_function = True
 
-        if line.startswith("}") and consumes_function:
+        if stripped_line.startswith("}") and consumes_function:
           consumes_function = False
 
           curr_function.append(line)
@@ -129,13 +130,15 @@ class PowerShellParser(BaseParser):
       self.__parse_comments(function)
       parsed_code = ""
 
+      has_args = function in self.functions_args.keys()
+
       for code_line in code:
 
         parsed_code += code_line
 
       body_code += f"""
       <section id="definition-{function}" class="function-section">
-        <header class="function-title"> {function} </header>
+        <header class="function-title"> {function} {f'({self.__generate_html_parameters(function)})' if has_args else ''} </header>
   
         <div class="function-content">
           <div class="description">
@@ -371,7 +374,6 @@ class PowerShellParser(BaseParser):
   def parse_functions(self, key: str, function_body: list[str], debug: bool = False) -> str:
     is_params = False
     function_args = {}
-    types = ""
 
     for line in function_body:
       if line.strip().startswith("param("):
@@ -388,10 +390,63 @@ class PowerShellParser(BaseParser):
         ###   $config
         ### )
 
+        ### If we fall on a Parameter instruction
         if line.strip().startswith("[Parameter"):
-          types = line.strip()
+          start_block = line.index("[")
+          end_block = line.index("]")
+          arg_opts = line[start_block+1:end_block]
 
+          ### For now, we recognize that there are options, but we don't render them
+          ### maybe later we will do it.
+          print("arg_opts:", arg_opts)
+          continue
+
+        ### If the parameter has typing
         if line.strip().startswith("["):
           start_block = line.index("[")
           end_block = line.index("]")
-          arg_type = line[start_block:end_block]
+          arg_block = line.index("$")
+
+          arg_type = line[start_block+1:end_block]
+          arg_name = line[arg_block::].replace(",", "")
+
+          ### We handle possible comment in the end line
+          if "#" in arg_name:
+            comment_block = line.index("#")
+            arg_name = line[arg_block:comment_block]
+
+          arg_name = arg_name.replace("$", "").strip()
+
+          function_args[arg_name] = {
+            "type": arg_type.strip()
+          }
+
+        ### If the parameter doesn't have typing
+        if line.strip().startswith("$"):
+          arg_block = line.index("$")
+          arg_name = line[arg_block::].replace(",", "").strip()
+
+          ### We handle possible comment in the end line
+          if "#" in arg_name:
+            comment_block = line.index("#")
+            arg_name = line[arg_block:comment_block]
+
+          print("arg_type:", arg_name)
+
+    ### At the end, we add the body to the dictionary
+    self.functions_dict[key] = function_body
+
+  def __generate_html_parameters(self, key: str) -> str:
+    html = ""
+
+    ### Early break if the function doesn't have any arguments
+    if not key in self.functions_args.keys():
+      return html
+
+    for arg_key, arg_dict in self.functions_args[key].items():
+      html += f"<span class='parameter-type type-{arg_dict['type'].strip()}'>{arg_dict['type'].strip()}</span><span class='parameter-name'>{arg_key.strip()},&nbsp;</span>"
+
+    if html.endswith(",&nbsp;</span>"):
+      html = html[:-14] + "</span>"
+
+    return html
