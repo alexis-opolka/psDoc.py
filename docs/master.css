@@ -169,3 +169,33 @@ footer>hr {
 .global-description>section {
   margin-left: 25px;
 }
+
+.parameter {
+  padding: 2px;
+
+  background-color: #1a1a1a;
+  color: #c7c7c7;
+
+  margin-right: 5px;
+  border-radius: 5px;
+}
+
+.parameter.parameter-optional {
+  background-color: #1a1a4a;
+}
+
+.parameter-type {
+  font-size: small;
+}
+
+.parameter-type.type-string {
+  color: #7ec699;
+}
+
+.parameter-type.type-boolean {
+  color: #7e00ee;
+}
+
+.parameter-type.type-byte {
+  color: #6196cc;
+}

@@ -17,5 +17,18 @@ function test {
     Write-Output "$StringToEcho"
 }
 
+function testWithOptionalParameters {
+    param (
+        [parameter(Mandatory)]
+        [string] $StringToEcho,
+        [parameter(Mandatory = $false)]
+        [boolean] $BoolValue = $false,
+        [parameter(Mandatory = $false)]
+        [byte] $intValue = 12
+    )
+
+    Write-Output "$StringToEcho"
+}
+
 ### We're calling the test function
 test 'Hello World'

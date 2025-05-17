@@ -23,12 +23,28 @@
       test
      </a>
      <br/>
+     <a href="#definition-testWithOptionalParameters">
+      testWithOptionalParameters
+     </a>
+     <br/>
     </section>
    </section>
    <section class="definitions">
+    <header class="h2">
+     Functions Definitions
+    </header>
     <section class="function-section" id="definition-test">
      <header class="function-title">
-      test
+      test (
+      <span class="parameter">
+       <span class="parameter-type type-string">
+        string
+       </span>
+       <span class="parameter-name">
+        StringToEcho
+       </span>
+      </span>
+      )
      </header>
      <div class="function-content">
       <div class="description">
@@ -38,6 +54,7 @@
          This a test function used as an example of the output
          <br/>
          for psDoc.py
+         <br/>
          <br/>
         </p>
        </section>
@@ -53,6 +70,7 @@
         </p>
        </section>
       </div>
+      <hr style="width: 85%; margin: 25px"/>
       <section class="code">
        <details>
         <summary>
@@ -66,8 +84,63 @@
     )
 
     Write-Output "$StringToEcho"
-}
-</code></pre>
+}</code></pre>
+        </div>
+       </details>
+      </section>
+     </div>
+    </section>
+    <section class="function-section" id="definition-testWithOptionalParameters">
+     <header class="function-title">
+      testWithOptionalParameters (
+      <span class="parameter">
+       <span class="parameter-type type-string">
+        string
+       </span>
+       <span class="parameter-name">
+        StringToEcho
+       </span>
+      </span>
+      <span class="parameter parameter-optional">
+       <span class="parameter-type type-boolean">
+        boolean
+       </span>
+       <span class="parameter-name">
+        BoolValue = false
+       </span>
+      </span>
+      <span class="parameter parameter-optional">
+       <span class="parameter-type type-byte">
+        byte
+       </span>
+       <span class="parameter-name">
+        intValue = 12
+       </span>
+      </span>
+      )
+     </header>
+     <div class="function-content">
+      <div class="description">
+      </div>
+      <hr style="width: 85%; margin: 25px"/>
+      <section class="code">
+       <details>
+        <summary>
+         See code for testWithOptionalParameters
+        </summary>
+        <div class="code">
+         <pre><code class="language-powershell">function testWithOptionalParameters {
+    param (
+        [parameter(Mandatory)]
+        [string] $StringToEcho,
+        [parameter(Mandatory = $false)]
+        [boolean] $BoolValue = $false,
+        [parameter(Mandatory = $false)]
+        [byte] $intValue = 12
+    )
+
+    Write-Output "$StringToEcho"
+}</code></pre>
         </div>
        </details>
       </section>
@@ -98,6 +171,19 @@ function test {
     Write-Output "$StringToEcho"
 }
 
+function testWithOptionalParameters {
+    param (
+        [parameter(Mandatory)]
+        [string] $StringToEcho,
+        [parameter(Mandatory = $false)]
+        [boolean] $BoolValue = $false,
+        [parameter(Mandatory = $false)]
+        [byte] $intValue = 12
+    )
+
+    Write-Output "$StringToEcho"
+}
+
 ### We're calling the test function
 test 'Hello World'
 </code></pre>
@@ -110,7 +196,7 @@ test 'Hello World'
     <a href="https://github.com/alexis-opolka/psDoc.py">
      psDoc.py
     </a>
-    v0.9.
+    v0.11.2.
    </section>
   </footer>
  </body>

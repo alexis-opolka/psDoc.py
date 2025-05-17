@@ -120,6 +120,19 @@ class PowerShellParser(BaseParser):
     script_code = ""
     toc = ""
 
+
+    script_comment = self.__parse_comments("script")
+    script_comment_parsed = f"""
+    <section id="script-description" class="global-description">
+      <header class="h2">Script Description</header>
+      <section>
+        {script_comment}
+      </section>
+    </section>
+    """
+    has_script_comment = script_comment != ""
+
+    ### We're looping through functions defined in the script
     for i in range(0, len(self.function_names)):
       function = self.function_names[i]
       code = self.functions_dict[function]
@@ -133,24 +146,23 @@ class PowerShellParser(BaseParser):
       has_args = function in self.functions_args.keys()
 
       for code_line in code:
-
         parsed_code += code_line
 
       body_code += f"""
       <section id="definition-{function}" class="function-section">
         <header class="function-title"> {function} {f'({self.__generate_html_parameters(function)})' if has_args else ''} </header>
-  
+
         <div class="function-content">
           <div class="description">
             {self.parsed_comment}
           </div>
-  
+
           <hr style="width: 85%; margin: 25px" />
 
           <section class="code">
             <details>
               <summary> See code for {function} </summary>
-  
+
               <div class="code">
                 <pre><code class="language-powershell">{parsed_code}</code></pre>
               </div>
@@ -159,9 +171,6 @@ class PowerShellParser(BaseParser):
         </div>
       </section>
       """
-
-    for script_line in self.other:
-      script_code += script_line
 
     html_code = f"""<!DOCTYPE html>
   <html>
@@ -186,12 +195,7 @@ class PowerShellParser(BaseParser):
           </section>
         </section>
 
-        <section id="script-description" class="global-description">
-          <header class="h2">Script Description</header>
-          <section>
-            {self.__parse_comments("script")}
-          </section>
-        </section>
+        {script_comment_parsed if has_script_comment else ''}
   
         <section class="definitions">
           <header class="h2">Functions Definitions</header>
@@ -202,7 +206,7 @@ class PowerShellParser(BaseParser):
   
         <section class="script">
           <header> Below is the entire file parsed by this script </header>
-          <pre><code class="language-powershell">{script_code}</code></pre>
+          <pre><code class="language-powershell">{''.join(self.other)}</code></pre>
         </section>
   
       </main>
@@ -384,9 +388,13 @@ class PowerShellParser(BaseParser):
     return line
 
   def __parse_comments(self, key: str, debug: bool = False) -> str:
-
     ### We're cleaning possible old comments
     self.parsed_comment = ""
+
+    ### if the key we've been given is not part of the dictionary
+    ### we return an empty string
+    if not key in self.comments.keys():
+      return self.parsed_comment
 
     for comment_line in self.comments[key]:
       if debug:
@@ -435,8 +443,11 @@ class PowerShellParser(BaseParser):
     function_args = {}
     arg_opts = ""
 
-    def parse_parameter(arg_name: str, arg_type: str | None, arg_opts: str):
+    def parse_parameter(arg_name: str, arg_type: str | None, arg_opts: str, debug: bool = False):
       is_optional = False
+
+      if debug:
+        print(f"PARAM: [{arg_type}] {arg_name}")
 
       if "=" in arg_name:
         is_optional = True
@@ -457,10 +468,11 @@ class PowerShellParser(BaseParser):
       ### We're cleaning the arg_opts
       arg_opts = ""
 
+
     for line in function_body:
       line_stripped = line.strip()
 
-      if line_stripped.startswith("param("):
+      if line_stripped.startswith("param(") or line_stripped.startswith("param ("):
         is_params = True
 
       if is_params & line_stripped.endswith(")"):
@@ -475,7 +487,7 @@ class PowerShellParser(BaseParser):
         ### )
 
         ### If we fall on a Parameter instruction
-        if line_stripped.startswith("[Parameter"):
+        if line_stripped.lower().startswith("[parameter"):
           start_block = line_stripped.index("[")
           end_block = line_stripped.index("]")
           arg_opts = line_stripped[start_block+1:end_block]
@@ -483,10 +495,14 @@ class PowerShellParser(BaseParser):
           continue
 
         ### If the parameter has typing
-        if line_stripped.startswith("["):
+        if line_stripped.startswith("[") and "$" in line_stripped:
           start_block = line_stripped.index("[")
           end_block = line_stripped.index("]")
-          arg_block = line_stripped.index("$")
+
+          if "$" in line_stripped:
+            arg_block = line_stripped.index("$")
+          else:
+            arg_block = 0
 
           arg_type = line_stripped[start_block+1:end_block]
           arg_name = line_stripped[arg_block::].replace(",", "")
