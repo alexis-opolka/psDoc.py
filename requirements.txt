@@ -1,1 +1,7 @@
+### Mandatory to "pretty" print the HTML to a file
 bs4
+
+### (Optional) https://github.com/executablebooks/markdown-it-py
+###   * Download this dependency if you want to be able to parse markdown files
+###   *  This dependency does not impact the in-file parsing from the built-in library
+markdown-it-py[plugins]
