@@ -16,3 +16,28 @@ class BaseParser:
     self.functions_dict = {}
 
     self.version = version
+
+
+    ### we're defining utils for the HTML rendering
+    self.html = HTMLUtils(version)
+
+
+class HTMLUtils:
+  def __init__(self, version: str):
+    self.version = version
+
+    self.footer = f"""
+    <footer>
+      <hr />
+
+      <section>
+        Made by <a href="https://github.com/alexis-opolka/psDoc.py">psDoc.py</a> v{self.version}.
+      </section>
+    </footer>
+    """
+
+    self.head_dependencies = """
+    <link rel="stylesheet" href="master.css" />
+    <link rel="stylesheet" href="prism/prism.css" />
+    <script src="prism/prism.js"></script>
+    """

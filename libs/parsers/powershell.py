@@ -177,9 +177,7 @@ class PowerShellParser(BaseParser):
     <head>
       <title> Documentation of {script_name_parsed} </title>
   
-      <link rel="stylesheet" href="master.css" />
-      <link rel="stylesheet" href="prism/prism.css" />
-      <script src="prism/prism.js" />
+      {self.html.head_dependencies}
     </head>
     <body>
   
@@ -210,13 +208,7 @@ class PowerShellParser(BaseParser):
         </section>
   
       </main>
-      <footer>
-        <hr />
-  
-        <section>
-          Made by <a href="https://github.com/alexis-opolka/psDoc.py">psDoc.py</a> v{self.version}.
-        </section>
-      </footer>
+      {self.html.footer}
     </body>
   </html>
   """
