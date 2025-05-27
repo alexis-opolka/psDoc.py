@@ -2,11 +2,12 @@
 
 
 ### External libraries
-import os
+import os, inspect
 
 from os import path, listdir
 from sys import argv
 from bs4 import BeautifulSoup
+from inspect import getfile, currentframe
 
 ### Internal libraries
 from libs.parsers.baseParser import BaseParser
@@ -140,6 +141,7 @@ def parse_folder(folder: str, out_folder: str):
 
 ### Parameters
 ignore_keyword = "--ignore"
+stylesheet_keyword = "--stylesheet"
 
 ### Supported files
 supported_files = {
@@ -151,6 +153,8 @@ if __name__ == "__main__":
   ### We check for the args
   check_args_size(argv)
 
+  script_dir = path.dirname(path.abspath(getfile(currentframe())))
+
   ### If we're here, we haven't failed the check
   file = argv[1]
 
@@ -160,6 +164,11 @@ if __name__ == "__main__":
     ignored = argv[argv.index(ignore_keyword)+1].strip().split(",")
 
     print("Elements to ignore:", ignored)
+
+  ### If we're given a stylesheet
+  stylesheet = script_dir + os.sep + "src" + os.sep + "master.css"
+  if stylesheet_keyword in argv:
+    stylesheet = argv[argv.index(stylesheet_keyword)+1].strip()
 
   folder = "docs"
   base_parser = BaseParser("", version)
@@ -175,3 +184,12 @@ if __name__ == "__main__":
 
   if path.isdir(file):
     parse_folder(file, folder)
+
+  ### We're now adding the stylesheet
+  ### We don't check if the folder exists as it should already have been
+  ### before arriving on this line
+  with open(stylesheet, "rb") as fin:
+    content = fin.read()
+
+    with open(f"{folder}/master.css", "wb") as fout:
+      fout.write(content)
