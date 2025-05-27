@@ -4,7 +4,7 @@
 ### External libraries
 import os, inspect
 
-from os import path, listdir
+from os import path, listdir, mkdir
 from sys import argv
 from bs4 import BeautifulSoup
 from inspect import getfile, currentframe
@@ -139,9 +139,17 @@ def parse_folder(folder: str, out_folder: str):
     fout.write(index_string)
 
 
+def copy_file(src_file: str, out_file: str):
+  with open(src_file, "rb") as fin:
+    content = fin.read()
+
+    with open(out_file, "wb") as fout:
+      fout.write(content)
+
 ### Parameters
 ignore_keyword = "--ignore"
 stylesheet_keyword = "--stylesheet"
+no_prism_keyword = "--no-prism"
 
 ### Supported files
 supported_files = {
@@ -170,6 +178,11 @@ if __name__ == "__main__":
   if stylesheet_keyword in argv:
     stylesheet = argv[argv.index(stylesheet_keyword)+1].strip()
 
+  ### If we don't want to have prism.js within the exported folder
+  use_prism = True
+  if no_prism_keyword in argv:
+    use_prism = False
+
   folder = "docs"
   base_parser = BaseParser("", version)
 
@@ -188,8 +201,18 @@ if __name__ == "__main__":
   ### We're now adding the stylesheet
   ### We don't check if the folder exists as it should already have been
   ### before arriving on this line
-  with open(stylesheet, "rb") as fin:
-    content = fin.read()
+  copy_file(stylesheet, f"{folder}/master.css")
 
-    with open(f"{folder}/master.css", "wb") as fout:
-      fout.write(content)
+  if use_prism:
+    prism_out_path = f"{folder}/prism"
+
+    ### If the path doesn't exists
+    if not path.exists(prism_out_path):
+      mkdir(prism_out_path)
+
+    base_prism_path = script_dir + os.sep + "src" + os.sep + "prism"
+    for file in listdir(base_prism_path):
+      current_file = base_prism_path + os.sep + file
+
+      if path.isfile(current_file):
+        copy_file(current_file, prism_out_path + os.sep + file)
