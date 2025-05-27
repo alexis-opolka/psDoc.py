@@ -49,14 +49,28 @@ section[class="script"]>header {
 }
 
 section[class="description"] {
-  padding: 2px;
-  color: grey;
+  padding: 5px;
+  color: #404040;
   border-radius: 5px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   -ms-border-radius: 5px;
   -o-border-radius: 5px;
+
+  border-left: 3px solid #808080;
+  border-bottom-left-radius: 5px;
+  border-top-left-radius: 5px;
+
+  margin: 10px;
+
+  background-color: rgba(226, 226, 226, 0.6);
+  width: 85%;
 }
+
+section[class="description"]>* {
+  margin-left: 15px;
+}
+
 
 section[class="components"]>header,
 section[class="links"]>header {
@@ -170,32 +184,44 @@ footer>hr {
   margin-left: 25px;
 }
 
-.parameter {
-  padding: 2px;
-
-  background-color: #1a1a1a;
-  color: #c7c7c7;
-
-  margin-right: 5px;
-  border-radius: 5px;
-}
-
-.parameter.parameter-optional {
-  background-color: #1a1a4a;
-}
+/*
+  Argument types
+*/
 
 .parameter-type {
+  text-align: center;
   font-size: small;
+
+  padding: 5px;
+
 }
 
-.parameter-type.type-string {
-  color: #7ec699;
+.type-string {
+  color: rgb(0, 156, 26);
 }
 
-.parameter-type.type-boolean {
-  color: #7e00ee;
+.type-byte {
+  color: rgb(0, 160, 135);
 }
 
-.parameter-type.type-byte {
-  color: #6196cc;
+.parameter-name {
+  margin-right: 0;
+}
+
+.parameter {
+  background-color: #404040;
+  color: #c7c7c7;
+
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -ms-border-radius: 5px;
+  -o-border-radius: 5px;
+
+  padding: 2px;
+  margin-right: 5px;
+}
+
+.parameter-optional {
+  background-color: #505060;
 }
