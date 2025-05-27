@@ -196,14 +196,6 @@ footer>hr {
 
 }
 
-.type-string {
-  color: rgb(0, 156, 26);
-}
-
-.type-byte {
-  color: rgb(0, 160, 135);
-}
-
 .parameter-name {
   margin-right: 0;
 }
@@ -224,4 +216,22 @@ footer>hr {
 
 .parameter-optional {
   background-color: #505060;
+}
+
+/*
+
+  * Types coloration
+
+*/
+
+.type-string {
+  color: rgb(0, 156, 26);
+}
+
+.type-byte {
+  color: rgb(0, 160, 135);
+}
+
+.type-boolean {
+  color: rgb(189, 115, 5)
 }
